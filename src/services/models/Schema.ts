@@ -67,6 +67,7 @@ export class SchemaModel {
   rawSchema: OpenAPISchema;
   schema: MergedOpenAPISchema;
   extensions?: Record<string, any>;
+  'x-enumDescriptions': { [name: string]: string };
   const: any;
   contentEncoding?: string;
   contentMediaType?: string;
@@ -124,6 +125,7 @@ export class SchemaModel {
     this.type = schema.type || detectType(schema);
     this.format = schema.format;
     this.enum = schema.enum || [];
+    this['x-enumDescriptions'] = schema['x-enumDescriptions'];
     this.example = schema.example;
     this.examples = schema.examples;
     this.deprecated = !!schema.deprecated;
@@ -226,6 +228,7 @@ export class SchemaModel {
       }
       if (this.items?.isPrimitive) {
         this.enum = this.items.enum;
+        this['x-enumDescriptions'] = this.items['x-enumDescriptions'];
       }
       if (isArray(this.type)) {
         const filteredType = this.type.filter(item => item !== 'array');
@@ -480,7 +483,7 @@ function buildFields(
   if (options.sortPropsAlphabetically) {
     fields = sortByField(fields, 'name');
   }
-  if (options.requiredPropsFirst) {
+  if (options.sortRequiredPropsFirst) {
     // if not sort alphabetically sort in the order from required keyword
     fields = sortByRequired(fields, !options.sortPropsAlphabetically ? schema.required : undefined);
   }

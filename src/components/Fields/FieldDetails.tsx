@@ -8,7 +8,7 @@ import {
   TypePrefix,
   TypeTitle,
 } from '../../common-elements/fields';
-import { getSerializedValue, isObject } from '../../utils';
+import { getSerializedValue, isArray, isObject } from '../../utils';
 import { ExternalDocumentation } from '../ExternalDocumentation/ExternalDocumentation';
 import { Markdown } from '../Markdown/Markdown';
 import { EnumValues } from './EnumValues';
@@ -42,7 +42,8 @@ export const FieldDetailsComponent = observer((props: FieldProps) => {
     extraDescription,
     extraApiReferenceForValidation,
   } = field;
-  const isArrayType = schema.type === 'array';
+  const isArrayType =
+    schema.type === 'array' || (isArray(schema.type) && schema.type.includes('array'));
 
   const rawDefault = enumSkipQuotes || _in === 'header'; // having quotes around header field default values is confusing and inappropriate
 
@@ -115,7 +116,7 @@ export const FieldDetailsComponent = observer((props: FieldProps) => {
       )}
       <FieldDetail raw={rawDefault} label={l('default') + ':'} value={defaultValue} />
       {!renderDiscriminatorSwitch && (
-        <EnumValues isArrayType={isArrayType} values={schema.enum} />
+        <EnumValues type={schema.type} values={schema['x-enumDescriptions'] || schema.enum} />
       )}{' '}
       {extraDescription && <ExtraDescription extraDescriptions={extraDescription} />}
       {renderedExamples}

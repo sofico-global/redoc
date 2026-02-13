@@ -311,6 +311,11 @@ exports[`#loadAndBundleSpec should load And Bundle Spec demo/openapi.yaml 1`] = 
               "sold",
             ],
             "type": "string",
+            "x-enumDescriptions": {
+              "available": "Available status",
+              "pending": "Pending status",
+              "sold": "Sold status",
+            },
           },
           "tags": {
             "description": "Tags attached to the pet",
@@ -581,6 +586,13 @@ and standard method from web, mobile and desktop applications.
         "tags": [
           "pet",
         ],
+        "x-badges": [
+          {
+            "color": "purple",
+            "name": "Beta",
+            "position": "before",
+          },
+        ],
         "x-codeSamples": [
           {
             "lang": "C#",
@@ -644,6 +656,12 @@ try {
         "summary": "Update an existing pet",
         "tags": [
           "pet",
+        ],
+        "x-badges": [
+          {
+            "color": "purple",
+            "name": "Alpha",
+          },
         ],
         "x-codeSamples": [
           {
@@ -882,6 +900,11 @@ try {
         "summary": "Find pet by ID",
         "tags": [
           "pet",
+        ],
+        "x-badges": [
+          {
+            "name": "Gamma",
+          },
         ],
       },
       "post": {

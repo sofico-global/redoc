@@ -1,3 +1,77 @@
+# [2.5.2](https://github.com/Redocly/redoc/compare/v2.5.1...v2.5.2) (2025-10-15)
+
+
+### Bug Fixes
+
+* Bumped `openapi-sampler` dependency to include the fix for `readOnly`/`writeOnly` handling in allOf.
+
+
+# [2.5.1](https://github.com/Redocly/redoc/compare/v2.4.0...v2.5.1) (2025-09-26)
+
+
+### Bug Fixes
+
+* Bumped `mobx-react` dependency to address a security vulnerability.
+
+# [2.5.0](https://github.com/Redocly/redoc/compare/v2.4.0...v2.5.0) (2025-04-14)
+
+
+### Bug Fixes
+
+* enhance accessibility for menu items with keyboard support ([#2655](https://github.com/Redocly/redoc/issues/2655)) ([2db293b](https://github.com/Redocly/redoc/commit/2db293bfb2973497dd33f31dc99e97f5bb90bbe8))
+
+
+### Features
+
+* add keyboard navigation support to JsonViewer component ([#2654](https://github.com/Redocly/redoc/issues/2654)) ([1b4126f](https://github.com/Redocly/redoc/commit/1b4126fde4531387f49c90f52efbd0c0e5f7b6ea))
+
+
+
+# [2.4.0](https://github.com/Redocly/redoc/compare/v2.3.0...v2.4.0) (2025-02-07)
+
+
+### Bug Fixes
+
+* Prototype Pollution Vulnerability Affecting redoc <=2.2.0 ([#2638](https://github.com/Redocly/redoc/issues/2638)) ([153ec7a](https://github.com/Redocly/redoc/commit/153ec7a0b7245639f404c0b038b612ae7377c7db))
+* unify redoc config ([#2647](https://github.com/Redocly/redoc/issues/2647)) ([53a6afc](https://github.com/Redocly/redoc/commit/53a6afc59624fe4591b0a0f1f20f41c0fbb5f1cf))
+
+
+### Features
+
+* add supporting react 19 in package.json ([#2652](https://github.com/Redocly/redoc/issues/2652)) ([3a74802](https://github.com/Redocly/redoc/commit/3a748022be3a7dc7f98669e1645dd5cda72f1abc))
+
+
+
+# [2.3.0](https://github.com/Redocly/redoc/compare/v2.2.0...v2.3.0) (2025-01-16)
+
+
+### Bug Fixes
+
+* displaying json example when showObjectSchemaExamples enabled ([#2635](https://github.com/Redocly/redoc/issues/2635)) ([59ee73f](https://github.com/Redocly/redoc/commit/59ee73fefa8e8edb398940076bdd721fc284caa3))
+* displaying nested items with type string ([#2634](https://github.com/Redocly/redoc/issues/2634)) ([85b622f](https://github.com/Redocly/redoc/commit/85b622fc581eb96303aeb85056aef36c74ea9f9d))
+* passing inline parameters after support react 18 for response title ([#2640](https://github.com/Redocly/redoc/issues/2640)) ([d614d2d](https://github.com/Redocly/redoc/commit/d614d2d022df8bd1989cb0eaf76d087b52120d36))
+
+
+### Features
+
+* update pattern styling ([#2196](https://github.com/Redocly/redoc/issues/2196)) ([#2600](https://github.com/Redocly/redoc/issues/2600)) ([aa0879c](https://github.com/Redocly/redoc/commit/aa0879ca0235112918428fdff8f4c48d2c6c4adf))
+
+
+
+# [2.2.0](https://github.com/Redocly/redoc/compare/v2.1.5...v2.2.0) (2024-10-16)
+
+
+### Bug Fixes
+
+* show siblings schema with oneOf ([#2576](https://github.com/Redocly/redoc/issues/2576)) ([60d131b](https://github.com/Redocly/redoc/commit/60d131b0a9dab4710e900323c9ba81160cecf7d8))
+
+
+### Features
+
+* add support x-badges ([#2605](https://github.com/Redocly/redoc/issues/2605)) ([64f1877](https://github.com/Redocly/redoc/commit/64f18779e5fe7e03f25862463cbc5062e85c867c))
+
+
+
 ## [2.1.5](https://github.com/Redocly/redoc/compare/v2.1.4...v2.1.5) (2024-06-10)
 
 

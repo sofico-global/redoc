@@ -47,12 +47,12 @@ export const ShelfIcon = styled(IntShelfIcon)`
   }
 `;
 
-export const Badge = styled.span<{ type: string }>`
+export const Badge = styled.span<{ type: string; color?: string }>`
   display: inline-block;
   padding: 2px 8px;
   margin: 0;
   background-color: ${props =>
-    props.type == 'm2m' ? 'none' : props.theme.colors[props.type].main};
+    props.type == 'm2m' ? 'none' : props.color || props.theme.colors[props.type].main};
   border: ${props => (props.type == 'm2m' ? 'rgba(38, 50, 56, 0.5) 1px solid' : 'none')};
   color: ${props => (props.type == 'm2m' ? 'black' : props.theme.colors[props.type].contrastText)};
   font-size: ${props => props.theme.typography.code.fontSize};

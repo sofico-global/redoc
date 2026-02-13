@@ -36,9 +36,13 @@ export const Operation = observer(({ operation }: OperationProps): JSX.Element =
     isWebhook,
     httpVerb,
     m2m,
+    badges,
   } = operation;
   const hasDescription = !!(description || externalDocs);
   const { showWebhookVerb } = React.useContext(OptionsContext);
+  const badgesBefore = badges.filter(({ position }) => position === 'before');
+  const badgesAfter = badges.filter(({ position }) => position === 'after');
+
   return (
     <OptionsContext.Consumer>
       {options => (
@@ -46,6 +50,11 @@ export const Operation = observer(({ operation }: OperationProps): JSX.Element =
           <MiddlePanel>
             <H2>
               <ShareLink to={operation.id} />
+              {badgesBefore.map(({ name, color }) => (
+                <Badge type="primary" key={name} color={color}>
+                  {name}
+                </Badge>
+              ))}
               {summary} {deprecated && <Badge type="warning"> Deprecated </Badge>}
               {m2m && <Badge type="m2m"> M2M </Badge>}
               {isWebhook && (
@@ -54,6 +63,11 @@ export const Operation = observer(({ operation }: OperationProps): JSX.Element =
                   Webhook {showWebhookVerb && httpVerb && '| ' + httpVerb.toUpperCase()}
                 </Badge>
               )}
+              {badgesAfter.map(({ name, color }) => (
+                <Badge type="primary" key={name} color={color}>
+                  {name}
+                </Badge>
+              ))}
             </H2>
             {options.pathInMiddlePanel && !isWebhook && (
               <Endpoint operation={operation} inverted={true} />
