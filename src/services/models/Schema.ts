@@ -655,3 +655,145 @@ function collectUniqueOneOfTypesDeep(schema: SchemaModel) {
   crawl(schema);
   return Array.from(uniqueTypes.values());
 }
+
+/**
+ * Collects all activeOneOf values from a schema tree.
+ * This is used to ensure MobX tracks all nested discriminator selections as dependencies.
+ * Returns an array of {schema, activeIndex} pairs for all discriminators in the tree.
+ */
+export function collectActiveDiscriminatorSelections(
+  schema: SchemaModel,
+  selections: Array<{ schema: SchemaModel; activeIndex: number }> = [],
+): Array<{ schema: SchemaModel; activeIndex: number }> {
+  // If schema has oneOf, record its active selection and recurse into the active variant
+  if (schema.oneOf && schema.oneOf.length > 0) {
+    // Read activeOneOf to register MobX dependency
+    const activeIndex = schema.activeOneOf;
+    selections.push({ schema, activeIndex });
+
+    // Recurse into the active variant
+    const activeVariant = schema.oneOf[activeIndex];
+    if (activeVariant) {
+      collectActiveDiscriminatorSelections(activeVariant, selections);
+    }
+  }
+
+  // Recurse into fields
+  if (schema.fields) {
+    for (const field of schema.fields) {
+      if (field.schema) {
+        collectActiveDiscriminatorSelections(field.schema, selections);
+      }
+    }
+  }
+
+  // Recurse into array items
+  if (schema.items) {
+    collectActiveDiscriminatorSelections(schema.items, selections);
+  }
+
+  return selections;
+}
+
+/**
+ * Recursively resolves a SchemaModel to a raw OpenAPI schema,
+ * using the active discriminator/oneOf selection for all nested schemas.
+ * This allows example generation to reflect the currently selected variants.
+ */
+export function getSchemaWithActiveDiscriminators(schema: SchemaModel): OpenAPISchema {
+  // If schema has oneOf with active selection, use the active variant
+  if (schema.oneOf && schema.oneOf.length > 0) {
+    const activeVariant = schema.oneOf[schema.activeOneOf];
+    if (activeVariant) {
+      // Get the resolved schema from the active variant
+      const resolvedVariant = getSchemaWithActiveDiscriminators(activeVariant);
+
+      // If there's a discriminator property, ensure it's set to the variant's title
+      if (schema.discriminatorProp && typeof resolvedVariant === 'object') {
+        const existingProp = resolvedVariant.properties?.[schema.discriminatorProp] || {};
+        return {
+          ...resolvedVariant,
+          properties: {
+            ...(resolvedVariant.properties || {}),
+            [schema.discriminatorProp]: {
+              type: 'string',
+              ...existingProp,
+              // Use const to force the exact value in the sampler
+              const: activeVariant.title,
+              // Also set default and example as fallbacks
+              default: activeVariant.title,
+              example: activeVariant.title,
+              // Clear enum to prevent sampler from picking a different value
+              enum: undefined,
+            },
+          },
+        };
+      }
+      return resolvedVariant;
+    }
+  }
+
+  // Start with the raw schema as base
+  const result: OpenAPISchema = { ...schema.rawSchema };
+
+  // Remove oneOf/anyOf since we're resolving to specific variants
+  delete result.oneOf;
+  delete result.anyOf;
+
+  // Recursively resolve fields (object properties)
+  if (schema.fields && schema.fields.length > 0) {
+    result.properties = {};
+    for (const field of schema.fields) {
+      if (field.schema) {
+        result.properties[field.name] = getSchemaWithActiveDiscriminators(field.schema);
+      }
+    }
+  }
+
+  // Recursively resolve array items
+  if (schema.items) {
+    result.items = getSchemaWithActiveDiscriminators(schema.items);
+  }
+
+  return result;
+}
+
+/**
+ * Applies discriminator property values to a generated sample object.
+ * This should be called AFTER sampling to ensure discriminator values are correct,
+ * since openapi-sampler may not respect const/default values on $ref properties.
+ */
+export function applyDiscriminatorValues(sample: any, schema: SchemaModel): void {
+  if (!sample || typeof sample !== 'object') {
+    return;
+  }
+
+  // If schema has oneOf with a discriminator, set the discriminator value on the sample
+  if (schema.oneOf && schema.oneOf.length > 0 && schema.discriminatorProp) {
+    const activeVariant = schema.oneOf[schema.activeOneOf];
+    if (activeVariant && activeVariant.title) {
+      sample[schema.discriminatorProp] = activeVariant.title;
+    }
+
+    // Recurse into the active variant to handle nested discriminators
+    if (activeVariant) {
+      applyDiscriminatorValues(sample, activeVariant);
+    }
+  }
+
+  // Recurse into fields (object properties)
+  if (schema.fields) {
+    for (const field of schema.fields) {
+      if (field.schema && sample[field.name] !== undefined) {
+        applyDiscriminatorValues(sample[field.name], field.schema);
+      }
+    }
+  }
+
+  // Recurse into array items
+  if (schema.items && Array.isArray(sample)) {
+    for (const item of sample) {
+      applyDiscriminatorValues(item, schema.items);
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import { observer } from 'mobx-react';
 import * as React from 'react';
 
 import { StyledPre } from '../../common-elements/samples';
@@ -10,13 +11,14 @@ export interface ExampleProps {
   mimeType: string;
 }
 
-export function Example({ example, mimeType }: ExampleProps) {
+// Observer to react to example.value changes
+export const Example = observer(function Example({ example, mimeType }: ExampleProps) {
   if (example.value === undefined && example.externalValueUrl) {
     return <ExternalExample example={example} mimeType={mimeType} />;
   } else {
     return <ExampleValue value={example.value} mimeType={mimeType} />;
   }
-}
+});
 
 export function ExternalExample({ example, mimeType }: ExampleProps) {
   const value = useExternalExample(example, mimeType);

@@ -1,3 +1,5 @@
+import { observable, makeObservable, action } from 'mobx';
+
 import type { OpenAPIEncoding, OpenAPIExample, Referenced } from '../../types';
 import { isFormUrlEncoded, isJsonLike, urlFormEncodePayload } from '../../utils/openapi';
 import type { OpenAPIParser } from '../OpenAPIParser';
@@ -5,7 +7,9 @@ import type { OpenAPIParser } from '../OpenAPIParser';
 const externalExamplesCache: { [url: string]: Promise<any> } = {};
 
 export class ExampleModel {
+  @observable.ref
   value: any;
+
   summary?: string;
   description?: string;
   externalValueUrl?: string;
@@ -16,6 +20,8 @@ export class ExampleModel {
     public mime: string,
     encoding?: { [field: string]: OpenAPIEncoding },
   ) {
+    makeObservable(this);
+
     const { resolved: example } = parser.deref(infoOrRef);
     this.value = example.value;
     this.summary = example.summary;
@@ -27,6 +33,11 @@ export class ExampleModel {
     if (isFormUrlEncoded(mime) && this.value && typeof this.value === 'object') {
       this.value = urlFormEncodePayload(this.value, encoding);
     }
+  }
+
+  @action
+  updateValue(newValue: any) {
+    this.value = newValue;
   }
 
   getExternalValue(mimeType: string): Promise<any> {
