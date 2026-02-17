@@ -1,5 +1,5 @@
 import * as Sampler from 'openapi-sampler';
-import { computed, makeObservable } from 'mobx';
+import { makeObservable, computed } from 'mobx';
 
 import type { OpenAPIMediaType } from '../../types';
 import type { RedocNormalizedOptions } from '../RedocNormalizedOptions';

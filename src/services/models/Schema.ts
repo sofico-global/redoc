@@ -664,6 +664,7 @@ function collectUniqueOneOfTypesDeep(schema: SchemaModel) {
 export function collectActiveDiscriminatorSelections(
   schema: SchemaModel,
   selections: Array<{ schema: SchemaModel; activeIndex: number }> = [],
+  path: string = 'root',
 ): Array<{ schema: SchemaModel; activeIndex: number }> {
   // If schema has oneOf, record its active selection and recurse into the active variant
   if (schema.oneOf && schema.oneOf.length > 0) {
@@ -674,7 +675,11 @@ export function collectActiveDiscriminatorSelections(
     // Recurse into the active variant
     const activeVariant = schema.oneOf[activeIndex];
     if (activeVariant) {
-      collectActiveDiscriminatorSelections(activeVariant, selections);
+      collectActiveDiscriminatorSelections(
+        activeVariant,
+        selections,
+        `${path}.oneOf[${activeIndex}]`,
+      );
     }
   }
 
@@ -682,14 +687,14 @@ export function collectActiveDiscriminatorSelections(
   if (schema.fields) {
     for (const field of schema.fields) {
       if (field.schema) {
-        collectActiveDiscriminatorSelections(field.schema, selections);
+        collectActiveDiscriminatorSelections(field.schema, selections, `${path}.${field.name}`);
       }
     }
   }
 
   // Recurse into array items
   if (schema.items) {
-    collectActiveDiscriminatorSelections(schema.items, selections);
+    collectActiveDiscriminatorSelections(schema.items, selections, `${path}[]`);
   }
 
   return selections;
