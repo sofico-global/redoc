@@ -70,6 +70,10 @@ Note that you can specify the `scrollYOffset` value in any of the following ways
 - as a CSS selector - the selector of the element to be used for specifying the offset. The distance from the top of the page to the element's bottom is used as the offset.
 - a function (advanced) - a getter function. Must return a number representing the offset (in pixels).
 
+### parentElementSelector
+
+A CSS selector for the scroll container that ReDoc lives in. By default ReDoc assumes the whole page (`window`) is what scrolls. Set this when ReDoc is embedded in a scrollable container (for example a panel in `angular-split`) so that scroll tracking and deep-link/query-param positioning work against that container instead of `window`.
+
 ### showExtensions
 
 Shows specification extensions ('x-' fields). Extensions used by Redoc are ignored. The value can be boolean or an array of strings with names of extensions to display. When used as boolean and set to `true`, all specification extensions are shown.

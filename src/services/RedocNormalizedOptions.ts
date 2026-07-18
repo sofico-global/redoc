@@ -35,6 +35,7 @@ export interface RedocRawOptions {
   disableSearch?: boolean | string;
   onlyRequiredInSamples?: boolean | string;
   showExtensions?: boolean | string | string[];
+  parentElementSelector?: string;
   sideNavStyle?: SideNavStyleEnum;
   hideSingleRequestSampleTab?: boolean | string;
   hideRequestPayloadSample?: boolean;
@@ -177,6 +178,20 @@ export class RedocNormalizedOptions {
     }
   }
 
+  static normalizeParentElementSelector(
+    value: RedocRawOptions['parentElementSelector'],
+  ): Element | null {
+    if (typeof value === 'string') {
+      try {
+        return querySelector(value);
+      } catch (e) {
+        console.warn('Invalid selector for parent element.');
+      }
+    }
+
+    return null;
+  }
+
   static normalizeSideNavStyle(value: RedocRawOptions['sideNavStyle']): SideNavStyleEnum {
     const defaultValue = SideNavStyleEnum.SummaryOnly;
     if (typeof value !== 'string') {
@@ -246,6 +261,7 @@ export class RedocNormalizedOptions {
   disableSearch: boolean;
   onlyRequiredInSamples: boolean;
   showExtensions: boolean | string[];
+  parentElement: Element | null;
   sideNavStyle: SideNavStyleEnum;
   hideSingleRequestSampleTab: boolean;
   hideRequestPayloadSample: boolean;
@@ -324,6 +340,9 @@ export class RedocNormalizedOptions {
     this.disableSearch = argValueToBoolean(raw.disableSearch);
     this.onlyRequiredInSamples = argValueToBoolean(raw.onlyRequiredInSamples);
     this.showExtensions = RedocNormalizedOptions.normalizeShowExtensions(raw.showExtensions);
+    this.parentElement = RedocNormalizedOptions.normalizeParentElementSelector(
+      raw.parentElementSelector,
+    );
     this.sideNavStyle = RedocNormalizedOptions.normalizeSideNavStyle(raw.sideNavStyle);
     this.hideSingleRequestSampleTab = argValueToBoolean(raw.hideSingleRequestSampleTab);
     this.hideRequestPayloadSample = argValueToBoolean(raw.hideRequestPayloadSample);
