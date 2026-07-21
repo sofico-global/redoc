@@ -147,7 +147,7 @@ export class MenuStore {
   };
 
   private activateAndScrollWithNavigationStrategy(item: IMenuItem | undefined): void {
-    if (this.shouldQueryParamNavigationBeUsed()) {
+    if (this.shouldEventDrivenNavigationBeUsed() || this.shouldQueryParamNavigationBeUsed()) {
       this.activateAndScroll(item, true, true);
     } else {
       this.activateAndScroll(item, false);
@@ -156,6 +156,10 @@ export class MenuStore {
 
   private shouldQueryParamNavigationBeUsed(): boolean {
     return this.options?.userQueryParamToNavigate;
+  }
+
+  private shouldEventDrivenNavigationBeUsed(): boolean {
+    return this.options?.eventDrivenNavigation;
   }
 
   /**

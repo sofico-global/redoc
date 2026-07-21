@@ -5,6 +5,8 @@ import { RedocNormalizedOptions } from './RedocNormalizedOptions';
 
 const EVENT = 'hashchange';
 
+export const POSITION_CHANGED_EVENT = 'redocPositionChanged';
+
 export class HistoryService {
   private _emiter;
   private options: RedocNormalizedOptions;
@@ -17,6 +19,11 @@ export class HistoryService {
 
   get currentId(): string {
     if (IS_BROWSER) {
+      // In event-driven mode the URL is never read: navigation targets only come in
+      // via the 'redocUpdatePosition' event payload or the initialSectionId option
+      if (this.shouldEventDrivenNavigationBeUsed()) {
+        return '';
+      }
       if (this.shouldQueryParamNavigationBeUsed()) {
         // When the window.location.hash is not empty this means that we have clicked on
         // router that's for example stored in the description via markdown
@@ -36,6 +43,11 @@ export class HistoryService {
     if (!id) {
       return '';
     }
+    // Keep links inert in event-driven mode so clicking (or middle-clicking)
+    // them never touches the URL; navigation happens in the click handler
+    if (this.shouldEventDrivenNavigationBeUsed()) {
+      return 'javascript:void(0)';
+    }
     if (this.shouldQueryParamNavigationBeUsed()) {
       return this.getFullUrl(id);
     } else {
@@ -53,7 +65,7 @@ export class HistoryService {
   };
 
   bind() {
-    if (IS_BROWSER) {
+    if (IS_BROWSER && !this.shouldEventDrivenNavigationBeUsed()) {
       window.addEventListener('hashchange', this.emit, false);
     }
   }
@@ -68,6 +80,19 @@ export class HistoryService {
   @debounce
   replace(id: string | null, rewriteHistory: boolean = false) {
     if (!IS_BROWSER) {
+      return;
+    }
+
+    if (this.shouldEventDrivenNavigationBeUsed()) {
+      // Instead of writing the URL, report the position to the host application.
+      // Callers pass URL-encoded ids, the event payload carries the raw section id.
+      // Mirroring the URL-based flow: a push (rewriteHistory=false) also triggers
+      // the internal navigation, like the emit() after pushState used to
+      const sectionId = id ? decodeURI(id) : null;
+      this.dispatchPositionChangedEvent(sectionId);
+      if (!rewriteHistory && sectionId) {
+        this._emiter.emit(EVENT, sectionId);
+      }
       return;
     }
 
@@ -103,6 +128,14 @@ export class HistoryService {
 
   private shouldQueryParamNavigationBeUsed(): boolean {
     return this.options?.userQueryParamToNavigate;
+  }
+
+  private shouldEventDrivenNavigationBeUsed(): boolean {
+    return this.options?.eventDrivenNavigation;
+  }
+
+  private dispatchPositionChangedEvent(sectionId: string | null): void {
+    window.dispatchEvent(new CustomEvent(POSITION_CHANGED_EVENT, { detail: { sectionId } }));
   }
 
   private getQueryParams(search: string): string {

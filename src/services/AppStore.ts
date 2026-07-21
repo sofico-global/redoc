@@ -72,7 +72,7 @@ export class AppStore {
     this.scroll = new ScrollService(this.options);
 
     // update position statically based on hash (in case of SSR)
-    MenuStore.updateOnHistory(this.history.currentId, this.scroll);
+    MenuStore.updateOnHistory(this.initialSectionId, this.scroll);
 
     // Listen for external event to update
     window.addEventListener('redocUpdatePosition', this.listener);
@@ -96,7 +96,7 @@ export class AppStore {
   }
 
   onDidMount() {
-    this.menu.updateOnHistory();
+    this.menu.updateOnHistory(this.initialSectionId);
     this.updateMarkOnMenu(this.menu.activeItemIdx);
   }
 
@@ -156,8 +156,28 @@ export class AppStore {
     this.marker.mark();
   }
 
-  private updateOnEvent(): void {
-    MenuStore.updateOnHistory(this.history.currentId, this.scroll);
+  private updateOnEvent(event: Event): void {
+    const sectionId = (event as CustomEvent<{ sectionId?: string }>).detail?.sectionId;
+    if (this.options.eventDrivenNavigation) {
+      // The event payload is the only navigation source in this mode;
+      // an event without a sectionId is a no-op
+      if (sectionId) {
+        MenuStore.updateOnHistory(sectionId, this.scroll);
+      }
+      return;
+    }
+    MenuStore.updateOnHistory(sectionId ?? this.history.currentId, this.scroll);
+  }
+
+  /**
+   * id to position the document at on load: the initialSectionId option in
+   * event-driven navigation mode, the URL hash/query param otherwise
+   */
+  private get initialSectionId(): string {
+    if (this.options.eventDrivenNavigation) {
+      return this.options.initialSectionId || '';
+    }
+    return this.history.currentId;
   }
 }
 

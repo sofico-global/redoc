@@ -110,6 +110,17 @@ _Pull requests to add your own API page to the list are welcome_
 
 Redoc is highly configurable, see the [configuration documentation](docs/config.md) for details.
 
+### Fork extensions (@sofico-codebase/redoc)
+
+This fork adds options for embedding Redoc inside a host application (e.g. an Angular app) that owns the browser URL:
+
+* `userQueryParamToNavigate` (boolean, default `false`) - navigate via a `redoc` query parameter instead of the URL hash. The host can dispatch a `redocUpdatePosition` `CustomEvent` on `window` to make Redoc re-read the query parameter and scroll to the section it references. The event may also carry the target directly as `detail: { sectionId }`, which takes precedence over the URL.
+* `eventDrivenNavigation` (boolean, default `false`) - communicate positions purely via `window` events; Redoc never reads or writes the browser URL (no `pushState`/`replaceState`, no hash, no query parameter). Takes precedence over `userQueryParamToNavigate`.
+  * Inbound: dispatch `new CustomEvent('redocUpdatePosition', { detail: { sectionId: 'tag/Vehicles/operation/getCar' } })` on `window` to scroll to that section. An event without `detail.sectionId` is ignored.
+  * Outbound: whenever the active section changes (scrollspy, menu clicks, deep links), Redoc dispatches a `redocPositionChanged` `CustomEvent` on `window` with `detail: { sectionId: string | null }` (`null` when scrolled above the first section).
+* `initialSectionId` (string, optional) - only used with `eventDrivenNavigation`: the section to scroll to once after the first render, replacing the URL-based deep link.
+* `parentElementSelector` (string, optional) - selector for the scrolling container/element when Redoc is not scrolled by the window itself.
+
 ### OpenAPI specification extensions
 Redoc uses the following [specification extensions](https://redocly.com/docs/api-reference-docs/spec-extensions/):
 

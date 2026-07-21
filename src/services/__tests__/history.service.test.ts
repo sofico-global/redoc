@@ -83,4 +83,69 @@ describe('History service', () => {
       expect(history.linkForId('')).toEqual('');
     });
   });
+
+  describe('History with config property: `eventDrivenNavigation` true', () => {
+    const overrideOptions = new RedocNormalizedOptions({
+      eventDrivenNavigation: true,
+    });
+
+    const nextTick = () => new Promise(resolve => setTimeout(resolve));
+
+    test('currentId should not read the URL', () => {
+      window.location.hash = '#testid';
+      const history = new HistoryService(overrideOptions);
+      expect(history.currentId).toEqual('');
+    });
+
+    test('should return inert link for id', () => {
+      const history = new HistoryService(overrideOptions);
+      expect(history.linkForId('testid')).toEqual('javascript:void(0)');
+    });
+
+    test('replace should dispatch redocPositionChanged instead of writing the URL', async () => {
+      const dispatched: CustomEvent[] = [];
+      const listener = (e: Event) => dispatched.push(e as CustomEvent);
+      window.addEventListener('redocPositionChanged', listener);
+      const pushState = jest.spyOn(window.history, 'pushState');
+      const replaceState = jest.spyOn(window.history, 'replaceState');
+
+      const history = new HistoryService(overrideOptions);
+      history.replace('testid', true);
+      await nextTick();
+
+      expect(dispatched).toHaveLength(1);
+      expect(dispatched[0].detail).toEqual({ sectionId: 'testid' });
+      expect(pushState).not.toHaveBeenCalled();
+      expect(replaceState).not.toHaveBeenCalled();
+
+      window.removeEventListener('redocPositionChanged', listener);
+      pushState.mockRestore();
+      replaceState.mockRestore();
+    });
+
+    test('replace with empty id should dispatch null sectionId', async () => {
+      const dispatched: CustomEvent[] = [];
+      const listener = (e: Event) => dispatched.push(e as CustomEvent);
+      window.addEventListener('redocPositionChanged', listener);
+
+      const history = new HistoryService(overrideOptions);
+      history.replace('', true);
+      await nextTick();
+
+      expect(dispatched).toHaveLength(1);
+      expect(dispatched[0].detail).toEqual({ sectionId: null });
+
+      window.removeEventListener('redocPositionChanged', listener);
+    });
+
+    test('replace without rewriteHistory should also notify subscribers', async () => {
+      const fn = jest.fn();
+      const history = new HistoryService(overrideOptions);
+      history.subscribe(fn);
+      history.replace('testid');
+      await nextTick();
+
+      expect(fn).toHaveBeenCalledWith('testid');
+    });
+  });
 });

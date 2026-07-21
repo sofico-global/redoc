@@ -73,6 +73,8 @@ export interface RedocRawOptions {
   showWebhookVerb?: boolean;
   hidePropertiesPrefix?: boolean;
   userQueryParamToNavigate?: boolean;
+  eventDrivenNavigation?: boolean;
+  initialSectionId?: string;
 }
 
 export function argValueToBoolean(val?: string | boolean, defaultValue?: boolean): boolean {
@@ -293,6 +295,8 @@ export class RedocNormalizedOptions {
   showWebhookVerb: boolean;
   hidePropertiesPrefix?: boolean;
   userQueryParamToNavigate: boolean;
+  eventDrivenNavigation: boolean;
+  initialSectionId?: string;
 
   nonce?: string;
 
@@ -382,6 +386,8 @@ export class RedocNormalizedOptions {
     this.minCharacterLengthToInitSearch = argValueToNumber(raw.minCharacterLengthToInitSearch) || 3;
     this.showWebhookVerb = argValueToBoolean(raw.showWebhookVerb);
     this.userQueryParamToNavigate = argValueToBoolean(raw.userQueryParamToNavigate);
+    this.eventDrivenNavigation = argValueToBoolean(raw.eventDrivenNavigation);
+    this.initialSectionId = raw.initialSectionId;
     this.hidePropertiesPrefix = argValueToBoolean(raw.hidePropertiesPrefix, true);
   }
 }
