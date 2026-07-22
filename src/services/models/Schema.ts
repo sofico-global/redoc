@@ -26,6 +26,15 @@ import {
 import { l } from '../Labels';
 import { MilesConstants } from '../../types';
 
+/**
+ * Bumped on every discriminator (oneOf) selection change, anywhere. The
+ * examples computed in MediaTypeModel reads it, so samples recompute after
+ * any selection change - including selections on schemas whose observables
+ * did not exist yet when the sample was last computed (nested fields are
+ * built lazily, so a per-schema dependency cannot be registered up front).
+ */
+export const discriminatorSelectionsVersion = observable.box(0);
+
 // TODO: refactor this model, maybe use getters instead of copying all the values
 export class SchemaModel {
   pointer: string;
@@ -55,7 +64,32 @@ export class SchemaModel {
 
   constraints: string[];
 
-  fields?: FieldModel[];
+  /**
+   * Nested object fields are built lazily on first access: eager
+   * construction recurses per reference-path through the whole schema
+   * graph, which on large specs materializes hundreds of thousands of
+   * observable models (and OOMs the tab) even though only the expanded
+   * parts are ever shown. The UI reads this getter when it actually
+   * renders a schema level, so materialization follows expansion.
+   */
+  get fields(): FieldModel[] | undefined {
+    if (!this._fieldsBuilt) {
+      this._fieldsBuilt = true;
+      this._fields = this._buildFieldsFn?.();
+      this._buildFieldsFn = undefined;
+    }
+    return this._fields;
+  }
+
+  /** The fields built so far - a peek that never triggers materialization. */
+  get builtFields(): FieldModel[] | undefined {
+    return this._fields;
+  }
+
+  private _fields?: FieldModel[];
+  private _fieldsBuilt = false;
+  private _buildFieldsFn?: () => FieldModel[];
+
   items?: SchemaModel;
 
   oneOf?: SchemaModel[];
@@ -109,6 +143,7 @@ export class SchemaModel {
   @action
   activateOneOf(idx: number) {
     this.activeOneOf = idx;
+    discriminatorSelectionsVersion.set(discriminatorSelectionsVersion.get() + 1);
   }
 
   hasType(type: string) {
@@ -198,10 +233,12 @@ export class SchemaModel {
     }
 
     if (this.hasType('object')) {
-      this.fields = buildFields(parser, schema, this.pointer, this.options, this.refsStack);
+      this._buildFieldsFn = () =>
+        buildFields(parser, schema, this.pointer, this.options, this.refsStack);
     } else if (this.hasType('array')) {
       if (isArray(schema.items) || isArray(schema.prefixItems)) {
-        this.fields = buildFields(parser, schema, this.pointer, this.options, this.refsStack);
+        this._buildFieldsFn = () =>
+          buildFields(parser, schema, this.pointer, this.options, this.refsStack);
       } else if (schema.items) {
         this.items = new SchemaModel(
           parser,
@@ -683,9 +720,13 @@ export function collectActiveDiscriminatorSelections(
     }
   }
 
-  // Recurse into fields
-  if (schema.fields) {
-    for (const field of schema.fields) {
+  // Recurse into fields. Only fields that were already materialized by the
+  // UI are visited: unbuilt subtrees cannot hold a user-changed selection,
+  // and forcing them here would materialize the whole tree (the very thing
+  // lazy fields avoid). Selections made after later materialization still
+  // invalidate the examples computed via discriminatorSelectionsVersion.
+  if (schema.builtFields) {
+    for (const field of schema.builtFields) {
       if (field.schema) {
         collectActiveDiscriminatorSelections(field.schema, selections, `${path}.${field.name}`);
       }
@@ -745,10 +786,13 @@ export function getSchemaWithActiveDiscriminators(schema: SchemaModel): OpenAPIS
   delete result.oneOf;
   delete result.anyOf;
 
-  // Recursively resolve fields (object properties)
-  if (schema.fields && schema.fields.length > 0) {
+  // Recursively resolve fields (object properties). Unbuilt subtrees keep
+  // their raw schema: no discriminator below them was ever shown (let
+  // alone changed), so the sampler's own default resolution applies there,
+  // like it does upstream.
+  if (schema.builtFields && schema.builtFields.length > 0) {
     result.properties = {};
-    for (const field of schema.fields) {
+    for (const field of schema.builtFields) {
       if (field.schema) {
         result.properties[field.name] = getSchemaWithActiveDiscriminators(field.schema);
       }
@@ -786,9 +830,10 @@ export function applyDiscriminatorValues(sample: any, schema: SchemaModel): void
     }
   }
 
-  // Recurse into fields (object properties)
-  if (schema.fields) {
-    for (const field of schema.fields) {
+  // Recurse into fields (object properties); materialized ones only - an
+  // unbuilt subtree has no active selections to apply.
+  if (schema.builtFields) {
+    for (const field of schema.builtFields) {
       if (field.schema && sample[field.name] !== undefined) {
         applyDiscriminatorValues(sample[field.name], field.schema);
       }

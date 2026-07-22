@@ -8,6 +8,7 @@ import {
   getSchemaWithActiveDiscriminators,
   collectActiveDiscriminatorSelections,
   applyDiscriminatorValues,
+  discriminatorSelectionsVersion,
 } from './Schema';
 
 import { isJsonLike, mapValues } from '../../utils';
@@ -85,8 +86,13 @@ export class MediaTypeModel {
       return undefined;
     }
 
-    // IMPORTANT: Collect all active discriminator selections to register MobX dependencies.
-    // This ensures the computed re-runs when ANY nested discriminator selection changes.
+    // IMPORTANT: register MobX dependencies so the computed re-runs when a
+    // discriminator selection changes. Fields materialize lazily, so
+    // selections on not-yet-built schemas cannot be tracked individually;
+    // the global version counter (bumped by every activateOneOf) covers
+    // those, while the collected selections keep per-schema tracking for
+    // everything already materialized.
+    discriminatorSelectionsVersion.get();
     collectActiveDiscriminatorSelections(this.schema);
 
     return this.generateExamples();

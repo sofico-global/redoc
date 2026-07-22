@@ -78,6 +78,19 @@ export function StoreBuilder(props: StoreBuilderProps) {
     }
   }, [store, onLoaded]);
 
+  // The builder owns the stores it creates: dispose a store when it is
+  // replaced (spec/options change built a new one) or on unmount. Without
+  // this, replaced stores leak whole - their window listener and search
+  // worker keep the entire spec model graph reachable - so loading several
+  // large specs in one session crashes the tab. AppStore.dispose() is
+  // idempotent, so the extra dispose from <Redoc>'s own unmount (external
+  // stores stay the caller's responsibility) is harmless.
+  React.useEffect(() => {
+    return () => {
+      store?.dispose();
+    };
+  }, [store]);
+
   return children({
     loading: !store,
     store,

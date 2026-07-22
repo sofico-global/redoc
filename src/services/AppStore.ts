@@ -57,6 +57,8 @@ export class AppStore {
 
   private scroll: ScrollService;
   private disposer: Lambda | null = null;
+  /** Guards against double disposal (StoreBuilder cleanup + Redoc unmount). */
+  private disposed = false;
 
   private readonly listener: EventListenerOrEventListenerObject = this.updateOnEvent.bind(this);
 
@@ -101,6 +103,10 @@ export class AppStore {
   }
 
   dispose() {
+    if (this.disposed) {
+      return;
+    }
+    this.disposed = true;
     this.scroll.dispose();
     this.menu.dispose();
     window.removeEventListener('redocUpdatePosition', this.listener);
